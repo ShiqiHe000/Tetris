@@ -135,19 +135,22 @@ T = [['.....',
       '.....']]
 
 shapes = [S, Z, I, O, J, L, T]
-shape_colors = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0), (255, 165, 0), (0, 0, 255), (128, 0, 128)]
+shape_colors = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0), (255, 165, 0), (75, 136, 201), (128, 0, 128)]
 
 
 # index 0 - 6 represent shape
 
 
 class Piece(object):
-    def __init__(self, x, y, shape):
-        self.x = x
-        self.y = y
+    rows = 20   # y
+    columns = 10    # x
+
+    def __init__(self, column, row, shape):
+        self.x = column
+        self.y = row
         self.shape = shape
-        self.color = shape_colors[shape.index(shape)]
-        self.rotation = 0
+        self.color = shape_colors[shapes.index(shape)]
+        self.rotation = 0   # num 0 - 3
 
 # create one list for every row in the grid (20 sublist)
 # for each sublist we have 10 color.
@@ -158,7 +161,7 @@ def create_grid(locked_positions={}):
     # also check the static grids
     for i in range(len(grid)):  # 20 rows
         for j in range(len(grid[i])):   # 10 cols
-            if (j, i) in locked_positions:  # key exist in loacked_position
+            if (j, i) in locked_positions:  # key exist in locked_position
                 c = locked_positions[(j, i)]
                 grid[i][j] = c
     return grid
@@ -204,10 +207,15 @@ def check_lost(positions):
 
 # Randomly pick one shape from the shapes list.
 def get_shape():
+    global shapes, shape_colors
     return Piece(5, 0, random.choice(shapes))
 
-def draw_text_middle(text, size, color, surface):
-    pass
+def draw_text_middle(surface, text, size, color):
+    font = pygame.font.SysFont("comicsans", size, bold = True)
+    label = font.render(text, 1, color)
+
+    surface.blit(label, (top_left_x + play_width / 2 - label.get_width() / 2,
+                         top_left_y + play_height / 2 - label.get_height() / 2))
 
 
 # draw the line for the gird
@@ -225,14 +233,49 @@ def draw_grid(surface, grid):
 
 
 def clear_rows(grid, locked):
-    pass
+    inc = 0 # an increment
+
+    for i in range(len(grid) - 1, -1, -1):
+        row = grid[i]
+        if (0, 0, 0) not in row:
+            inc += 1
+            ind = i # index
+            for j in range(len(row)):
+                try:
+                    del locked[(j, i)]
+                except:
+                    continue
+    if inc > 0:
+        # sort the locked based on the y value of the locked dictionary
+        for key in sorted(list(locked), key = lambda x: x[1])[::-1]:
+            x, y = key
+            if y < ind: # if y is above the current index we removed
+                newKey = (x, y + inc)
+                locked[newKey] = locked.pop(key)
+
+    return inc  # return the number of rows we clear
 
 
 def draw_next_shape(shape, surface):
-    pass
+    font = pygame.font.SysFont('comicisans', 30)
+    label = font.render('Next shape:', 1, (255, 255, 255))
+
+    sx = top_left_x + play_width + 50
+    sy = top_left_y + play_height / 2 - 100
+
+    format = shape.shape[shape.rotation % len(shape.shape)]
+
+    for i, line in enumerate(format):
+        row = list(line)
+        for j, column in enumerate(row):
+            if column == '0':
+                pygame.draw.rect(surface, shape.color,
+                                 (sx + j * block_size, sy + i * block_size, block_size, block_size), 0)
+    surface.blit(label, (sx + 10, sy - 30))
 
 
-def draw_window(surface, grid):
+
+def draw_window(surface, gird, score = 0, last_score = 0):
     surface.fill((0, 0, 0))
     # draw a title
     pygame.font.init()  # init font object, we are ready to draw on the screen
@@ -242,6 +285,24 @@ def draw_window(surface, grid):
     # draw the label on the screen (in the middle)
     surface.blit(label, (top_left_x + play_width / 2 - label.get_width() / 2, 30))
 
+    # current score-----------------------------------------------------
+    font = pygame.font.SysFont('comicisans', 30)
+    label = font.render('Score: ' + str(score), 1, (255, 255, 255))
+
+    sx = top_left_x + play_width + 50
+    sy = top_left_y + play_height / 2 - 100
+
+    surface.blit(label, (sx + 30, sy + 160))
+    # -------------------------------------------------------------------
+    # last score --------------------------------------------------------
+    label = font.render('High Score: ' + str(last_score), 1, (255, 255, 255))
+
+    sx = top_left_x - 200
+    sy = top_left_y + 200
+
+    surface.blit(label, (sx + 30, sy + 160))
+    # -------------------------------------------------------------------
+
     # now draw the grid
     for i in range(len(grid)):
         for j in range(len(grid[i])):
@@ -249,16 +310,35 @@ def draw_window(surface, grid):
                              (top_left_x + j * block_size, top_left_y + i * block_size,
                               block_size, block_size), 0)
     # red rectangle
-    pygame.draw.rect(surface, (255, 0, 0), (top_left_x, top_left_y, play_width, play_height), 4)
     draw_grid(surface, grid)
+    pygame.draw.rect(surface, (255, 0, 0), (top_left_x, top_left_y, play_width, play_height), 5)
 
-    # update our screen
-    pygame.display.update()
+# update the score in scores.txt
+def update_score(nscore):
+    score = max_score()
+
+    with open('scores.txt', 'w') as f:
+        if int(score) > nscore:
+            f.write(str(score))
+        else:
+            f.write(str(nscore))
+
+def max_score():
+    with open('scores.txt', 'r') as f:
+        lines = f.readlines()
+        score = lines[0].strip()
+    return score
 
 def main(win):
+
+    last_score = max_score()
+
+    global grid
+
     locked_positions = {}   # position: color value  e.g: {(1, 2): (255, 0, 0)}
+
     # create grid
-    create_grid(locked_positions)
+    grid = create_grid(locked_positions)
 
     change_piece = False
     run = True
@@ -267,11 +347,20 @@ def main(win):
     clock = pygame.time.Clock()
     fall_time = 0
     fall_speed = 0.27 # how long it will take before each shape starts falling
+    level_time = 0  # how much time has passed, we increase the speed as time passes
+    score = 0
 
     while run:
         grid = create_grid(locked_positions)
         fall_time += clock.get_rawtime()    # get the time interval between last clock.tick()
+        level_time += clock.get_rawtime()
         clock.tick()
+
+        if level_time / 1000 > 10 :  # every 10 second we increase the speed
+            level_time = 0
+            if fall_speed > 0.12:   # stop increasing speed if fall_speed is too fast
+                fall_speed -= 0.005
+
 
         if fall_time / 1000 > fall_speed:
             fall_time = 0
@@ -284,6 +373,9 @@ def main(win):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+                pygame.display.quit()
+                quit()
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:  # left arrow
                     # move our block left
@@ -291,19 +383,19 @@ def main(win):
                     # check if it is a valid position
                     if not (valid_space(current_piece, grid)):
                         current_piece.x += 1
-                if event.key == pygame.K_RIGHT:     # right arrow
+                elif event.key == pygame.K_RIGHT:     # right arrow
                     # move block right
                     current_piece.x += 1
                     if not (valid_space(current_piece, grid)):
                         current_piece.x -= 1
 
-                if event.key == pygame.K_DOWN:  # down arrow
+                elif event.key == pygame.K_DOWN:  # down arrow
                     # move down
                     current_piece.y += 1
                     if not (valid_space(current_piece, grid)):
                         current_piece.y -= 1
 
-                if event.key == pygame.K_UP:    # up arrow
+                elif event.key == pygame.K_UP:    # up arrow
                     # rotate the shape
                     current_piece.rotation += 1
                     if not (valid_space(current_piece, grid)):
@@ -312,11 +404,13 @@ def main(win):
         shape_pos = convert_shape_format(current_piece) # check all the positions of the piece moving down,
                                                         # see if we hit the ground (then we need to lock it).
 
+        # add piece to the grid for drawing
         for i in range(len(shape_pos)):
             x, y = shape_pos[i]
-                if y > -1:
-                    grid[y][x] = current_piece.color
+            if y > -1:
+                grid[y][x] = current_piece.color
 
+        # if piece hit the ground
         if change_piece:
             for pos in shape_pos:
                 p = (pos[0], pos[1])
@@ -324,19 +418,36 @@ def main(win):
             current_piece = next_piece
             next_piece = get_shape()
             change_piece = False
+            score += clear_rows(grid, locked_positions) * 10
 
         # draw the grid
-        draw_window(win, grid)
+        draw_window(win, grid, score, last_score)
+
+        # draw the next shape
+        draw_next_shape(next_piece, win)
+        pygame.display.update()
 
         # check if we lost the game
         if check_lost(locked_positions):
+            draw_text_middle(win, "YOU LOST!", 80, (255, 255, 255))
+            pygame.display.update()
+            pygame.time.delay(1500)
             run = False
-
-    pygame.display.quit()
-
+            update_score(score)
 
 def main_menu(win):
-    main(win)
+    run = True
+    while run:
+        win.fill((0, 0, 0))
+        draw_text_middle(win, 'Press Any Key To Play', 60, (255, 255, 255))
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if event.type == pygame.KEYDOWN:
+                main(win)
+
+    pygame.display.quit()
 
 # create a pygame surface
 win = pygame.display.set_mode((s_width, s_height))
