@@ -356,7 +356,7 @@ def main(win):
         level_time += clock.get_rawtime()
         clock.tick()
 
-        if level_time / 1000 > 10 :  # every 10 second we increase the speed
+        if level_time / 1000 > 30 :  # every 10 second we increase the speed
             level_time = 0
             if fall_speed > 0.12:   # stop increasing speed if fall_speed is too fast
                 fall_speed -= 0.005
