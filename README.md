@@ -19,3 +19,10 @@ python3 -m pip install -U pygame --user
 , then you have `pygame` installed!
 
 If you need more installation instruction, please check [here](https://www.pygame.org/wiki/GettingStarted). 
+
+To run the code, simple type `python Tetris_main.py` in your terminal. 
+You can also use your favorate IDE to execute the program. 
+
+### Little surprise!
+The dropping speed of the blocks will slowly increase as you play to bring this game more flavors!
+How long can you handle? 
