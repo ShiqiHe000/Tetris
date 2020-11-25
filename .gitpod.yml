@@ -1,0 +1,8 @@
+ports:
+  - port: 5900
+    onOpen: ignore
+  - port: 6080
+    onOpen: open-preview
+tasks:
+  - init: pip3 install pygame
+    command: python3 Tetris_main.py
