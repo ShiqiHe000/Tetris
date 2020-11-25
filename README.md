@@ -2,6 +2,10 @@
 [Tetris](https://en.wikipedia.org/wiki/Tetris) is a tile-matching video game created by Russian software engineer Alexey Pajitnov in 1984. 
 I am sure that you have played this game before. 
 
+<p align="center">
+  <img src="./img/screenshot1.png" width="400" height = "400" class="center">
+</p>
+
 This Tetris game is made by [pygame](https://www.pygame.org/news). 
 
 # Try it and have some fun!
