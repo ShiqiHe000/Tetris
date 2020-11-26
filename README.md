@@ -26,3 +26,7 @@ You can also use your favorate IDE to execute the program.
 ### Little surprise!
 The dropping speed of the blocks will slowly increase as you play to bring this game more flavors!
 How long can you handle? 
+
+## Don't want to donwload? Try it in Gitpod
+Just try it in Gitpod:</br>
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/ShiqiHe000/Tetris/Tetris_main.py)
